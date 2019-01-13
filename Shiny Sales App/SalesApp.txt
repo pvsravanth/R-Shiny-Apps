@@ -1,0 +1,2449 @@
+rm(list = ls())
+Logged = FALSE
+my_username <- "ihisales"
+my_password <- "ihisalesUSA"
+
+library(shiny)
+
+library(shinydashboard)
+
+library(ggplot2)
+
+library(plotly)
+library(RMySQL)
+library(pool)
+library(sendmailR)
+library(xtable)
+
+con <- dbPool(
+drv = RMySQL::MySQL(),
+dbname = "revidbprod",
+host = "59.22.238",
+username = "ihi_db_admin",
+password = "IHIdb_USA_ad31993"
+)
+onStop(function() {
+poolClose(con)
+})
+
+ui <- dashboardPage(
+
+dashboardHeader(
+
+# title = "REVI"
+title = "IHI USA"
+),
+
+dashboardSidebar(
+
+sidebarMenu(
+
+menuItem(
+
+"SALES",
+
+tabName = "sales",
+
+icon = icon("dashboard")
+
+),
+
+menuItem(
+
+"INVENTORY",
+
+tabName = "inventory",
+
+icon = icon("dashboard")
+
+),
+
+menuItem("Stats", tabName = "stats", icon = icon("th"),
+
+menuSubItem( "Over All Stats","overallstats",icon=icon("th") ),
+menuSubItem( "Customer Stats","customerstats",icon=icon("line-chart") ),
+menuSubItem( "Sales Stats","salesstats",icon=icon("line-chart") ),
+menuSubItem( "Inventory Stats","inventorystats",icon=icon("line-chart") ),
+menuSubItem( "Stats Stats","statsstats",icon=icon("line-chart") )
+
+),
+
+menuItem(
+
+"Memebership",
+
+tabName = "membership",
+
+icon = icon("cog", lib = "glyphicon")
+
+)
+
+)
+
+),
+
+dashboardBody(
+tabItems(
+
+tabItem(
+tabName = "sales",
+tabsetPanel(
+
+tabPanel(
+
+"SALES",
+
+actionButton("makenewsale", "Make NEW Sale", icon = NULL, width = 500),
+tags$h2("Please Select the Desired Product "),
+tags$h2("   "),
+
+div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(
+
+"quality", "QUALITY :", c(
+
+"RSD" = "rsd",
+
+"NRSD" = "nrsd",
+
+"RDD" = "rdd",
+
+"NRDD" = "nrdd"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"product", "PRODUCT :", c(
+
+"MACHINE WEFT" = "machine_weft",
+
+"HAND WEFT" = "hand_weft",
+
+"MICROLOOP" = "micro_loop",
+
+"CLOSURE" = "closure",
+
+"FRONTAL" = "frontal",
+
+"FRONT LACE WIG" = "front_lace_wig",
+
+"7 PC CLIP" = "7_pc_clip",
+
+"10 PC CLIP" = "10_pc_clip",
+
+"KERATIN" = "keratin",
+
+"360 FRONTAL" = "360_frontal",
+
+"FULL LACE WIG" = "full_lace_wig",
+
+"MACHINE WIG" = "machine_wig",
+
+"HALO EXTENTIONS" = "halo_extensions"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"texture", "TEXTURE :", c(
+
+"NATURAL STRAIGHT/WAVY" = "natural_straight/wavy",
+
+"NATURAL CURLY" = "natural_curly",
+
+"BONE STRAIGHT" = "bone_straight",
+
+"DEEPWAVE" = "deep_wave",
+
+"CURLY" = "curly",
+
+"LOOSE WAVE" = "loose_wave",
+
+"BODY WAVE" = "body_wave",
+
+"JACKSON" = "jackson",
+
+"RELAXED WAVY" = "relaxed_wavy",
+
+"KINKY CURLY" = "kinky_curly",
+
+"ORGANIC" = "organic",
+
+"COIL CURLY" = "coil_curly",
+
+"CURLY RINGLET" = "curly_ringlet",
+
+"KINKY RINGLET" = "kinky_ringlet",
+
+"RELAXED ROOTS" = "relaxed_roots",
+
+"RELAXED" = "relaxed",
+
+"DUO" = "duo"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"size", "SIZE:", c(
+
+"inches_6" = "inches_6",
+
+"inches_8" = "inches_8",
+
+"inches_10" = "inches_10",
+
+"inches_12" = "inches_12",
+
+"inches_14" = "inches_14",
+
+"inches_16" = "inches_16",
+
+"inches_18" = "inches_18",
+
+"inches_20" = "inches_20",
+
+"inches_22" = "inches_22",
+
+"inches_24" = "inches_24",
+
+"inches_26" = "inches_26",
+
+"inches_28" = "inches_28",
+
+"inches_30" = "inches_30",
+
+"inches_32" = "inches_32"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 120px;", selectInput(
+
+"colour", "COLOUR :", c(
+
+"NATURAL" = "natural",
+
+"CUSTOMISED" = "customised",
+
+"#1" = "#1",
+
+"#1b" = "#1b",
+
+"#2" = "#2",
+
+"#3" = "#3",
+
+"#4" = "#4",
+
+"#5" = "#5",
+
+"#6" = "#6",
+
+"#7" = "#7",
+
+"#8" = "#8",
+
+"#12" = "#8",
+
+"#14" = "#14",
+
+"#18" = "#18",
+
+"#22" = "#22",
+
+"#24" = "#24",
+
+"#27" = "#27",
+
+"#28" = "#28",
+
+"#29" = "#29",
+
+"#30" = "#30",
+
+"#31" = "#31",
+
+"#32" = "#32",
+
+"#33" = "#33",
+
+"#33b" = "#33b",
+
+"#35" = "#35",
+
+"#613" = "#613",
+
+"#BURG" = "#burg",
+
+"#GREEN" = "#green",
+
+"#ORANGE" = "#orange",
+
+"#YELLOW" = "#yellow"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 100px;", numericInput("count","No.of Items",value = 1)),
+div(style="display: inline-block;vertical-align:top; width: 100px;", numericInput("discount","Discount",value = 0)),
+
+tags$h2("   "),
+actionButton("addtocart", "Add to Cart", icon = NULL , width = NULL),
+#tags$h2("   "),
+#div(style="display: inline-block", numericInput("valueremovefromcart","Product_ID to Remove",value =0 )),
+#tags$h2("   "),
+#div(style = "display:inline-block",actionButton("removefromcart", "Remove from Cart")),
+tags$h2("   "),
+div(tableOutput("cartitems"), style = "font-size: 80%; width: 100%"),
+tags$h2("   "),
+
+div(style = "display:inline-block", textInput("customer", "Enter Customer Email-ID :", "",placeholder = "Email-ID")),
+div(style = "display:inline-block", actionButton("confirmcustomer", "Confirm Customer")),
+
+div(tableOutput("customerdetails"), style = "font-size: 100%; width: 350%"),
+
+tags$h2("   "),
+actionButton("makesale", "Make Sale", icon = NULL, width = NULL),
+tags$h2("   "),
+div(textOutput("saledone"), style = "font-size: 100%; width: 350%")
+
+),
+
+tabPanel(
+
+"EXCHANGES",
+
+actionButton("makenewsaleexchange", "Make NEW Exchange", icon = NULL, width = 500),
+tags$h2("Please Select the Desired Product to Exchange "),
+tags$h2("   "),
+
+div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(
+
+"qualityexchange1", "QUALITY :", c(
+
+"RSD" = "rsd",
+
+"NRSD" = "nrsd",
+
+"RDD" = "rdd",
+
+"NRDD" = "nrdd"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"productexchange1", "PRODUCT :", c(
+
+"MACHINE WEFT" = "machine_weft",
+
+"HAND WEFT" = "hand_weft",
+
+"MICROLOOP" = "micro_loop",
+
+"CLOSURE" = "closure",
+
+"FRONTAL" = "frontal",
+
+"FRONT LACE WIG" = "front_lace_wig",
+
+"7 PC CLIP" = "7_pc_clip",
+
+"10 PC CLIP" = "10_pc_clip",
+
+"KERATIN" = "keratin",
+
+"360 FRONTAL" = "360_frontal",
+
+"FULL LACE WIG" = "full_lace_wig",
+
+"MACHINE WIG" = "machine_wig",
+
+"HALO EXTENTIONS" = "halo_extensions"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"textureexchange1", "TEXTURE :", c(
+
+"NATURAL STRAIGHT/WAVY" = "natural_straight/wavy",
+
+"NATURAL CURLY" = "natural_curly",
+
+"BONE STRAIGHT" = "bone_straight",
+
+"DEEPWAVE" = "deep_wave",
+
+"CURLY" = "curly",
+
+"LOOSE WAVE" = "loose_wave",
+
+"BODY WAVE" = "body_wave",
+
+"JACKSON" = "jackson",
+
+"RELAXED WAVY" = "relaxed_wavy",
+
+"KINKY CURLY" = "kinky_curly",
+
+"ORGANIC" = "organic",
+
+"COIL CURLY" = "coil_curly",
+
+"CURLY RINGLET" = "curly_ringlet",
+
+"KINKY RINGLET" = "kinky_ringlet",
+
+"RELAXED ROOTS" = "relaxed_roots",
+
+"RELAXED" = "relaxed",
+
+"DUO" = "duo"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"sizeexchange1", "SIZE:", c(
+
+"inches_6" = "inches_6",
+
+"inches_8" = "inches_8",
+
+"inches_10" = "inches_10",
+
+"inches_12" = "inches_12",
+
+"inches_14" = "inches_14",
+
+"inches_16" = "inches_16",
+
+"inches_18" = "inches_18",
+
+"inches_20" = "inches_20",
+
+"inches_22" = "inches_22",
+
+"inches_24" = "inches_24",
+
+"inches_26" = "inches_26",
+
+"inches_28" = "inches_28",
+
+"inches_30" = "inches_30",
+
+"inches_32" = "inches_32"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 120px;", selectInput(
+
+"colourexchange1", "COLOUR :", c(
+
+"NATURAL" = "natural",
+
+"CUSTOMISED" = "customised",
+
+"#1" = "#1",
+
+"#1b" = "#1b",
+
+"#2" = "#2",
+
+"#3" = "#3",
+
+"#4" = "#4",
+
+"#5" = "#5",
+
+"#6" = "#6",
+
+"#7" = "#7",
+
+"#8" = "#8",
+
+"#12" = "#8",
+
+"#14" = "#14",
+
+"#18" = "#18",
+
+"#22" = "#22",
+
+"#24" = "#24",
+
+"#27" = "#27",
+
+"#28" = "#28",
+
+"#29" = "#29",
+
+"#30" = "#30",
+
+"#31" = "#31",
+
+"#32" = "#32",
+
+"#33" = "#33",
+
+"#33b" = "#33b",
+
+"#35" = "#35",
+
+"#613" = "#613",
+
+"#BURG" = "#burg",
+
+"#GREEN" = "#green",
+
+"#ORANGE" = "#orange",
+
+"#YELLOW" = "#yellow"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 100px;", numericInput("countexchange1","No.of Items",value = 1)),
+
+tags$h2("   "),
+actionButton("addtocartexchange1", "Add to Cart", icon = NULL, width = NULL),
+tags$h2("   "),
+div(tableOutput("cartitemsexchange1"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+
+tags$h2("Please Select the Desired Product to Exchange With "),
+tags$h2("   "),
+
+div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(
+
+"qualityexchange2", "QUALITY :", c(
+
+"RSD" = "rsd",
+
+"NRSD" = "nrsd",
+
+"RDD" = "rdd",
+
+"NRDD" = "nrdd"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"productexchange2", "PRODUCT :", c(
+
+"MACHINE WEFT" = "machine_weft",
+
+"HAND WEFT" = "hand_weft",
+
+"MICROLOOP" = "micro_loop",
+
+"CLOSURE" = "closure",
+
+"FRONTAL" = "frontal",
+
+"FRONT LACE WIG" = "front_lace_wig",
+
+"7 PC CLIP" = "7_pc_clip",
+
+"10 PC CLIP" = "10_pc_clip",
+
+"KERATIN" = "keratin",
+
+"360 FRONTAL" = "360_frontal",
+
+"FULL LACE WIG" = "full_lace_wig",
+
+"MACHINE WIG" = "machine_wig",
+
+"HALO EXTENTIONS" = "halo_extensions"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"textureexchange2", "TEXTURE :", c(
+
+"NATURAL STRAIGHT/WAVY" = "natural_straight/wavy",
+
+"NATURAL CURLY" = "natural_curly",
+
+"BONE STRAIGHT" = "bone_straight",
+
+"DEEPWAVE" = "deep_wave",
+
+"CURLY" = "curly",
+
+"LOOSE WAVE" = "loose_wave",
+
+"BODY WAVE" = "body_wave",
+
+"JACKSON" = "jackson",
+
+"RELAXED WAVY" = "relaxed_wavy",
+
+"KINKY CURLY" = "kinky_curly",
+
+"ORGANIC" = "organic",
+
+"COIL CURLY" = "coil_curly",
+
+"CURLY RINGLET" = "curly_ringlet",
+
+"KINKY RINGLET" = "kinky_ringlet",
+
+"RELAXED ROOTS" = "relaxed_roots",
+
+"RELAXED" = "relaxed",
+
+"DUO" = "duo"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"sizeexchange2", "SIZE:", c(
+
+"inches_6" = "inches_6",
+
+"inches_8" = "inches_8",
+
+"inches_10" = "inches_10",
+
+"inches_12" = "inches_12",
+
+"inches_14" = "inches_14",
+
+"inches_16" = "inches_16",
+
+"inches_18" = "inches_18",
+
+"inches_20" = "inches_20",
+
+"inches_22" = "inches_22",
+
+"inches_24" = "inches_24",
+
+"inches_26" = "inches_26",
+
+"inches_28" = "inches_28",
+
+"inches_30" = "inches_30",
+
+"inches_32" = "inches_32"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 120px;", selectInput(
+
+"colourexchange2", "COLOUR :", c(
+
+"NATURAL" = "natural",
+
+"CUSTOMISED" = "customised",
+
+"#1" = "#1",
+
+"#1b" = "#1b",
+
+"#2" = "#2",
+
+"#3" = "#3",
+
+"#4" = "#4",
+
+"#5" = "#5",
+
+"#6" = "#6",
+
+"#7" = "#7",
+
+"#8" = "#8",
+
+"#12" = "#8",
+
+"#14" = "#14",
+
+"#18" = "#18",
+
+"#22" = "#22",
+
+"#24" = "#24",
+
+"#27" = "#27",
+
+"#28" = "#28",
+
+"#29" = "#29",
+
+"#30" = "#30",
+
+"#31" = "#31",
+
+"#32" = "#32",
+
+"#33" = "#33",
+
+"#33b" = "#33b",
+
+"#35" = "#35",
+
+"#613" = "#613",
+
+"#BURG" = "#burg",
+
+"#GREEN" = "#green",
+
+"#ORANGE" = "#orange",
+
+"#YELLOW" = "#yellow"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 100px;", numericInput("countexchange2","No.of Items",value = 1)),
+
+tags$h2("   "),
+actionButton("addtocartexchange2", "Add to Cart", icon = NULL, width = NULL),
+tags$h2("   "),
+
+div(tableOutput("cartitemsexchange2"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+
+div(style = "display:inline-block", textInput("customerexhange", "Enter Customer Email-ID :","", placeholder = "Email-ID")),
+div(style = "display:inline-block", actionButton("confirmcustomerechange", "Confirm Customer")),
+
+div(tableOutput("customerdetailsexchange"), style = "font-size: 100%; width: 350%"),
+
+tags$h2("   "),
+
+actionButton("makesaleexchange", "Confirm Exchange", icon = NULL, width = NULL),
+
+tags$h2("   "),
+
+div(textOutput("exchangedone"), style = "font-size: 100%; width: 350%")
+
+),
+
+tabPanel(
+
+"REFUNDS",
+
+actionButton("makenewsalerefund", "Make NEW Refund", icon = NULL, width = 500),
+tags$h2("Please Select the Desired Product to avail REFUND "),
+tags$h2("   "),
+
+div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(
+
+"qualityrefund", "QUALITY :", c(
+
+"RSD" = "rsd",
+
+"NRSD" = "nrsd",
+
+"RDD" = "rdd",
+
+"NRDD" = "nrdd"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"productrefund", "PRODUCT :", c(
+
+"MACHINE WEFT" = "machine_weft",
+
+"HAND WEFT" = "hand_weft",
+
+"MICROLOOP" = "micro_loop",
+
+"CLOSURE" = "closure",
+
+"FRONTAL" = "frontal",
+
+"FRONT LACE WIG" = "front_lace_wig",
+
+"7 PC CLIP" = "7_pc_clip",
+
+"10 PC CLIP" = "10_pc_clip",
+
+"KERATIN" = "keratin",
+
+"360 FRONTAL" = "360_frontal",
+
+"FULL LACE WIG" = "full_lace_wig",
+
+"MACHINE WIG" = "machine_wig",
+
+"HALO EXTENTIONS" = "halo_extensions"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"texturerefund", "TEXTURE :", c(
+
+"NATURAL STRAIGHT/WAVY" = "natural_straight/wavy",
+
+"NATURAL CURLY" = "natural_curly",
+
+"BONE STRAIGHT" = "bone_straight",
+
+"DEEPWAVE" = "deep_wave",
+
+"CURLY" = "curly",
+
+"LOOSE WAVE" = "loose_wave",
+
+"BODY WAVE" = "body_wave",
+
+"JACKSON" = "jackson",
+
+"RELAXED WAVY" = "relaxed_wavy",
+
+"KINKY CURLY" = "kinky_curly",
+
+"ORGANIC" = "organic",
+
+"COIL CURLY" = "coil_curly",
+
+"CURLY RINGLET" = "curly_ringlet",
+
+"KINKY RINGLET" = "kinky_ringlet",
+
+"RELAXED ROOTS" = "relaxed_roots",
+
+"RELAXED" = "relaxed",
+
+"DUO" = "duo"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"sizerefund", "SIZE:", c(
+
+"inches_6" = "inches_6",
+
+"inches_8" = "inches_8",
+
+"inches_10" = "inches_10",
+
+"inches_12" = "inches_12",
+
+"inches_14" = "inches_14",
+
+"inches_16" = "inches_16",
+
+"inches_18" = "inches_18",
+
+"inches_20" = "inches_20",
+
+"inches_22" = "inches_22",
+
+"inches_24" = "inches_24",
+
+"inches_26" = "inches_26",
+
+"inches_28" = "inches_28",
+
+"inches_30" = "inches_30",
+
+"inches_32" = "inches_32"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 120px;", selectInput(
+
+"colourrefund", "COLOUR :", c(
+
+"NATURAL" = "natural",
+
+"CUSTOMISED" = "customised",
+
+"#1" = "#1",
+
+"#1b" = "#1b",
+
+"#2" = "#2",
+
+"#3" = "#3",
+
+"#4" = "#4",
+
+"#5" = "#5",
+
+"#6" = "#6",
+
+"#7" = "#7",
+
+"#8" = "#8",
+
+"#12" = "#8",
+
+"#14" = "#14",
+
+"#18" = "#18",
+
+"#22" = "#22",
+
+"#24" = "#24",
+
+"#27" = "#27",
+
+"#28" = "#28",
+
+"#29" = "#29",
+
+"#30" = "#30",
+
+"#31" = "#31",
+
+"#32" = "#32",
+
+"#33" = "#33",
+
+"#33b" = "#33b",
+
+"#35" = "#35",
+
+"#613" = "#613",
+
+"#BURG" = "#burg",
+
+"#GREEN" = "#green",
+
+"#ORANGE" = "#orange",
+
+"#YELLOW" = "#yellow"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 100px;", numericInput("countrefund","No.of Items",value = 1)),
+
+tags$h2("   "),
+actionButton("addtocartrefund", "Add to Cart", icon = NULL, width = NULL),
+tags$h2("   "),
+
+div(tableOutput("cartitemsrefund"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+
+div(style = "display:inline-block", textInput("customerrefund", "Enter Customer Email-ID :","", placeholder = "Email-ID")),
+div(style = "display:inline-block", actionButton("confirmcustomerrefund", "Confirm Customer")),
+
+div(tableOutput("customerdetailsrefund"), style = "font-size: 100%; width: 350%"),
+
+tags$h2("   "),
+div(textOutput("makesalerefundtext"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+actionButton("makesalerefund", "Confirm Refund", icon = NULL, width = NULL)
+
+)
+)
+
+),
+
+# First tab content
+
+tabItem(
+
+tabName = "inventory",
+
+tabsetPanel(
+
+tabPanel(
+
+"View Inventory",
+
+tags$h2("Please Select the Desired Product to Check Inventory "),
+tags$h2("   "),
+div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(
+
+"qualityinventory", "QUALITY :", c(
+
+"RSD" = "rsd",
+
+"NRSD" = "nrsd",
+
+"RDD" = "rdd",
+
+"NRDD" = "nrdd"
+
+), multiple = T, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"productinventory", "PRODUCT :", c(
+
+"MACHINE WEFT" = "machine_weft",
+
+"HAND WEFT" = "hand_weft",
+
+"MICROLOOP" = "micro_loop",
+
+"CLOSURE" = "closure",
+
+"FRONTAL" = "frontal",
+
+"FRONT LACE WIG" = "front_lace_wig",
+
+"7 PC CLIP" = "7_pc_clip",
+
+"10 PC CLIP" = "10_pc_clip",
+
+"KERATIN" = "keratin",
+
+"360 FRONTAL" = "360_frontal",
+
+"FULL LACE WIG" = "full_lace_wig",
+
+"MACHINE WIG" = "machine_wig",
+
+"HALO EXTENTIONS" = "halo_extensions"
+
+), multiple = T, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"textureinventory", "TEXTURE :", c(
+
+"NATURAL STRAIGHT/WAVY" = "natural_straight/wavy",
+
+"NATURAL CURLY" = "natural_curly",
+
+"BONE STRAIGHT" = "bone_straight",
+
+"DEEPWAVE" = "deep_wave",
+
+"CURLY" = "curly",
+
+"LOOSE WAVE" = "loose_wave",
+
+"BODY WAVE" = "body_wave",
+
+"JACKSON" = "jackson",
+
+"RELAXED WAVY" = "relaxed_wavy",
+
+"KINKY CURLY" = "kinky_curly",
+
+"ORGANIC" = "organic",
+
+"COIL CURLY" = "coil_curly",
+
+"CURLY RINGLET" = "curly_ringlet",
+
+"KINKY RINGLET" = "kinky_ringlet",
+
+"RELAXED ROOTS" = "relaxed_roots",
+
+"RELAXED" = "relaxed",
+
+"DUO" = "duo"
+
+), multiple = T, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"sizeinventory", "SIZE:", c(
+
+"inches_6" = "inches_6",
+
+"inches_8" = "inches_8",
+
+"inches_10" = "inches_10",
+
+"inches_12" = "inches_12",
+
+"inches_14" = "inches_14",
+
+"inches_16" = "inches_16",
+
+"inches_18" = "inches_18",
+
+"inches_20" = "inches_20",
+
+"inches_22" = "inches_22",
+
+"inches_24" = "inches_24",
+
+"inches_26" = "inches_26",
+
+"inches_28" = "inches_28",
+
+"inches_30" = "inches_30",
+
+"inches_32" = "inches_32"
+
+), multiple = T, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 120px;", selectInput(
+
+"colourinventory", "COLOUR :", c(
+
+"NATURAL" = "natural",
+
+"CUSTOMISED" = "customised",
+
+"#1" = "#1",
+
+"#1b" = "#1b",
+
+"#2" = "#2",
+
+"#3" = "#3",
+
+"#4" = "#4",
+
+"#5" = "#5",
+
+"#6" = "#6",
+
+"#7" = "#7",
+
+"#8" = "#8",
+
+"#12" = "#8",
+
+"#14" = "#14",
+
+"#18" = "#18",
+
+"#22" = "#22",
+
+"#24" = "#24",
+
+"#27" = "#27",
+
+"#28" = "#28",
+
+"#29" = "#29",
+
+"#30" = "#30",
+
+"#31" = "#31",
+
+"#32" = "#32",
+
+"#33" = "#33",
+
+"#33b" = "#33b",
+
+"#35" = "#35",
+
+"#613" = "#613",
+
+"#BURG" = "#burg",
+
+"#GREEN" = "#green",
+
+"#ORANGE" = "#orange",
+
+"#YELLOW" = "#yellow"
+
+), multiple = T, selected = NULL)),
+
+tags$h2("   "),
+actionButton("addtocartinventory", "CHECK", icon = NULL, width = NULL),
+
+div(tableOutput("cartitemsinventory"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+
+div(dataTableOutput("inventorywholetable"), style = "font-size: 95%; width: 100%")
+
+),
+
+tabPanel(
+
+"Change Inventory",
+
+tags$h2("Please Select the Desired Product to Change Inventory "),
+tags$h2("   "),
+div(style="display: inline-block;vertical-align:top; width: 150px;", selectInput(
+
+"qualityinventorychange", "QUALITY :", c(
+
+"RSD" = "rsd",
+
+"NRSD" = "nrsd",
+
+"RDD" = "rdd",
+
+"NRDD" = "nrdd"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"productinventorychange", "PRODUCT :", c(
+
+"MACHINE WEFT" = "machine_weft",
+
+"HAND WEFT" = "hand_weft",
+
+"MICROLOOP" = "micro_loop",
+
+"CLOSURE" = "closure",
+
+"FRONTAL" = "frontal",
+
+"FRONT LACE WIG" = "front_lace_wig",
+
+"7 PC CLIP" = "7_pc_clip",
+
+"10 PC CLIP" = "10_pc_clip",
+
+"KERATIN" = "keratin",
+
+"360 FRONTAL" = "360_frontal",
+
+"FULL LACE WIG" = "full_lace_wig",
+
+"MACHINE WIG" = "machine_wig",
+
+"HALO EXTENTIONS" = "halo_extensions"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"textureinventorychange", "TEXTURE :", c(
+
+"NATURAL STRAIGHT/WAVY" = "natural_straight/wavy",
+
+"NATURAL CURLY" = "natural_curly",
+
+"BONE STRAIGHT" = "bone_straight",
+
+"DEEPWAVE" = "deep_wave",
+
+"CURLY" = "curly",
+
+"LOOSE WAVE" = "loose_wave",
+
+"BODY WAVE" = "body_wave",
+
+"JACKSON" = "jackson",
+
+"RELAXED WAVY" = "relaxed_wavy",
+
+"KINKY CURLY" = "kinky_curly",
+
+"ORGANIC" = "organic",
+
+"COIL CURLY" = "coil_curly",
+
+"CURLY RINGLET" = "curly_ringlet",
+
+"KINKY RINGLET" = "kinky_ringlet",
+
+"RELAXED ROOTS" = "relaxed_roots",
+
+"RELAXED" = "relaxed",
+
+"DUO" = "duo"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 180px;", selectInput(
+
+"sizeinventorychange", "SIZE:", c(
+
+"inches_6" = "inches_6",
+
+"inches_8" = "inches_8",
+
+"inches_10" = "inches_10",
+
+"inches_12" = "inches_12",
+
+"inches_14" = "inches_14",
+
+"inches_16" = "inches_16",
+
+"inches_18" = "inches_18",
+
+"inches_20" = "inches_20",
+
+"inches_22" = "inches_22",
+
+"inches_24" = "inches_24",
+
+"inches_26" = "inches_26",
+
+"inches_28" = "inches_28",
+
+"inches_30" = "inches_30",
+
+"inches_32" = "inches_32"
+
+), multiple = F, selected = NULL)),
+
+div(style="display: inline-block;vertical-align:top; width: 120px;", selectInput(
+
+"colourinventorychange", "COLOUR :", c(
+
+"NATURAL" = "natural",
+
+"CUSTOMISED" = "customised",
+
+"#1" = "#1",
+
+"#1b" = "#1b",
+
+"#2" = "#2",
+
+"#3" = "#3",
+
+"#4" = "#4",
+
+"#5" = "#5",
+
+"#6" = "#6",
+
+"#7" = "#7",
+
+"#8" = "#8",
+
+"#12" = "#8",
+
+"#14" = "#14",
+
+"#18" = "#18",
+
+"#22" = "#22",
+
+"#24" = "#24",
+
+"#27" = "#27",
+
+"#28" = "#28",
+
+"#29" = "#29",
+
+"#30" = "#30",
+
+"#31" = "#31",
+
+"#32" = "#32",
+
+"#33" = "#33",
+
+"#33b" = "#33b",
+
+"#35" = "#35",
+
+"#613" = "#613",
+
+"#BURG" = "#burg",
+
+"#GREEN" = "#green",
+
+"#ORANGE" = "#orange",
+
+"#YELLOW" = "#yellow"
+
+), multiple = F, selected = NULL)),
+
+tags$h2("   "),
+actionButton("addtocartinventorychange", "CONFIRM", icon = NULL, width = NULL),
+
+div(tableOutput("cartitemsinventorychange"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+
+tags$h2("Enter the NEW count or Price of the Product for Inventory "),
+
+div(style="display: inline-block;vertical-align:top; width: 500px;", numericInput("countinventorychangeadd","No.of Items to Add/Remove from Inventory",value = 0)),
+
+tags$h2("   "),
+div(style="display: inline-block;vertical-align:top; width: 500px;", numericInput("countinventorychangeprice","Price to change from Inventory",value = 0)),
+tags$h2("   "),
+
+# div(style="display: inline-block;vertical-align:top; width: 500px;", textInput("notesinventorychange", "Enter Notes for Changing Inventory :", "")),
+
+tags$h2("   "),
+
+textOutput("outputId1"),
+textOutput("outputId2"),
+
+actionButton("confirminventorychange", "CONFIRM", icon = NULL, width = NULL)
+
+)
+
+)
+
+),
+
+tabItem(
+
+tabName = "overallstats",
+
+box(title="Sales Stats", status= "primary",solidHeader=T, collapsible=T,width=12,
+fluidRow(
+
+infoBoxOutput("totalsalesstats"),
+infoBoxOutput("totalexchangessstats"),
+infoBoxOutput("totalrefundsstats")
+
+)
+
+),
+
+box(title="Invoice Stats", status= "primary",solidHeader=T, collapsible=T,width=12,
+fluidRow(
+
+infoBoxOutput("totalinvoicestats")
+
+)
+
+),
+
+box(title="Customer Stats", status= "primary",solidHeader=T, collapsible=T,width=12,
+fluidRow(
+
+infoBoxOutput("totalcustomerstats")
+
+)
+
+),
+
+box(title="Manual Inventory Change Stats", status= "primary",solidHeader=T, collapsible=T,width=12,
+fluidRow(
+infoBoxOutput("totalmanualinventorychangestats")
+
+)
+)
+
+),
+
+tabItem(
+
+tabName = "membership",
+
+tabsetPanel(
+
+tabPanel(
+
+"View Member",
+
+tags$h2("Enter Email-ID of Member"),
+tags$h2("   "),
+
+div(style = "display:inline-block", textInput("membercheck", "Enter Menber Email-ID :", "",placeholder = "Email-ID")),
+
+div(style = "display:inline-block", actionButton("memberchecksubmit", "Submit")),
+
+tags$h2("   "),
+
+div(tableOutput("memberchecktable"), style = "font-size: 100%; width: 350%"),
+div(dataTableOutput("completememberchecktable"), style = "font-size: 80%; width: 100%")
+
+),
+
+tabPanel(
+
+"Add New Member",
+
+tags$h2("Add Details of the New Member"),
+tags$h2("   "),
+
+div(style = "display:inline-block", textInput("memberadd1", "Enter Member's Email-ID :", "",placeholder = "Email-ID")),
+div(style = "display:inline-block", textInput("memberadd2", "Enter Member's First Name :" ,"",placeholder = "First Name")),
+div(style = "display:inline-block", textInput("memberadd3", "Enter Member's Last Name :", "",placeholder = "Last Name")),
+div(style = "display:inline-block", textInput("memberadd4", "Enter Member's Phone number :", "",placeholder = "Phone Number")),
+div(style = "display:inline-block", textInput("memberadd5", "Enter Member's Address :","",placeholder = "Address")),
+div(style = "display:inline-block", textInput("memberadd6", "Enter Member's Date of Birth :","", placeholder = "YYYY-MM-DD")),
+div(style = "display:inline-block", textInput("memberadd7", "Enter Member's Anniversary:", "",placeholder = "YYYY-MM-DD")),
+tags$h2("   "),
+div(tableOutput("memberaddtable"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+div(style = "display:inline-block", actionButton("memberaddsubmit", "Submit"))
+
+),
+
+tabPanel(
+
+"Update Member Details",
+
+tags$h2("Update Details of the New Member"),
+tags$h2("   "),
+
+div(style = "display:inline-block", textInput("memberupdate", "Enter Member's Email-ID :","",placeholder = "Email-ID")),
+
+div(style = "display:inline-block", actionButton("memberupdatesubmit", "Submit")),
+
+tags$h2("   "),
+
+div(tableOutput("memberupdatetable"), style = "font-size: 100%; width: 350%"),
+
+div(style = "display:inline-block", textInput("memberupdate4", "Enter Member's Phone number :","",placeholder = "Phone number")),
+div(style = "display:inline-block", textInput("memberupdate5", "Enter Member's Address :","",placeholder = "Address")),
+
+tags$h2("   "),
+div(textOutput("memberupdatetablenew"), style = "font-size: 100%; width: 350%"),
+tags$h2("   "),
+div(style = "display:inline-block", actionButton("memberupdatesubmitfinal", "Submit"))
+
+)
+
+)
+
+)
+
+))
+
+)
+
+##################################################################################################################
+
+server <- function(input, output,session) {
+
+values <- reactiveValues(authenticated = FALSE)
+
+# Return the UI for a modal dialog with data selection input. If 'failed'
+# is TRUE, then display a message that the previous value was invalid.
+dataModal <- function(failed = FALSE) {
+modalDialog(
+textInput("username", "Username:"),
+passwordInput("password", "Password:"),
+footer = tagList(
+# modalButton("Cancel"),
+actionButton("ok", "OK")
+)
+)
+}
+
+# Show modal when button is clicked.
+# This `observe` is suspended only whith right user credential
+
+obs1 <- observe({
+showModal(dataModal())
+})
+
+# When OK button is pressed, attempt to authenticate. If successful,
+# remove the modal.
+
+obs2 <- observe({
+req(input$ok)
+isolate({
+Username <- input$username
+Password <- input$password
+})
+Id.username <- which(my_username == Username)
+Id.password <- which(my_password == Password) if (length(Id.username) > 0 & length(Id.password) > 0) {
+if (Id.username == Id.password) {
+Logged <<- TRUE
+values$authenticated <- TRUE
+obs1$suspend()
+removeModal()
+
+} else {
+values$authenticated <- FALSE
+}
+}
+})
+
+### DB STREAMING
+
+inventoryData <- reactivePoll(6000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+
+dbGetQuery(con,statement='SELECT MAX(TIME_STAMP) from revidbprod.inventory_R;')
+
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+
+dbGetQuery(con,statement='SELECT * FROM revidbprod.inventory_R;')
+
+}
+)
+
+salesData <- reactivePoll(6000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+dbGetQuery(con,statement='SELECT MAX(TIME_STAMP) from revidbprod.sales;')
+
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+
+dbGetQuery(con,statement='SELECT * FROM revidbprod.sales;')
+
+}
+)
+
+exchangeData <- reactivePoll(60000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+dbGetQuery(con,statement='SELECT MAX(TIME_STAMP) from revidbprod.exchange;')
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+dbGetQuery(con,statement='SELECT * FROM revidbprod.exchange;')
+
+}
+)
+
+refundData <- reactivePoll(60000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+dbGetQuery(con,statement='SELECT MAX(TIME_STAMP) from revidbprod.refund;')
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+dbGetQuery(con,statement='SELECT * FROM revidbprod.refund;')
+}
+)
+
+inventorychangeData <- reactivePoll(6000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+
+dbGetQuery(con,statement='SELECT MAX(TIME_STAMP) from revidbprod.inventory_change;')
+
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+dbGetQuery(con,statement='SELECT * FROM revidbprod.inventory_change;')
+}
+)
+
+invoiceData <- reactivePoll(6000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+dbGetQuery(con,statement='SELECT MAX(TIME_STAMP) from revidbprod.invoice;')
+
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+dbGetQuery(con,statement='SELECT * FROM revidbprod.invoice;')
+}
+)
+
+customerData <- reactivePoll(60000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+dbGetQuery(con,statement='SELECT MAX(UPDATE_TIME) from revidbprod.customer;')
+
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+dbGetQuery(con,statement='SELECT * FROM revidbprod.customer;')
+}
+)
+
+manualinventorychangeData <- reactivePoll(100000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+dbGetQuery(con,statement='SELECT MAX(TIMESTAMP) from revidbprod.manual_inventory_change;')
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+dbGetQuery(con,statement='SELECT * FROM revidbprod.manual_inventory_change;')
+}
+)
+
+random <- as.character(Sys.time())
+random <- gsub(" ","",random)
+
+salesrandomgen <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/saledatanull.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv")
+
+system(salesrandomgen)
+
+exchange1randomgen <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/exchangenull1.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv")
+
+system(exchange1randomgen)
+
+exchange2randomgen <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/exchangenull1.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv")
+
+system(exchange2randomgen)
+
+refundrandomgen <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/refundnull1.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv")
+
+system(refundrandomgen)
+
+salescsv <- reactivePoll(1000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+file.mtime(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv"))
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+read.csv2(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv"), header = T, na.strings = "NA",sep=",")
+}
+)
+exchange1csv <- reactivePoll(2000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+file.mtime(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv"))
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+read.csv2(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv"), header = T, na.strings = "NA",sep=",")
+}
+)
+exchange2csv <- reactivePoll(2000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+file.mtime(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv"))
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+read.csv2(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv"), header = T, na.strings = "NA",sep=",")
+}
+)
+refundcsv <- reactivePoll(2000, session,
+# This function returns the time that the logfile was last
+# modified
+checkFunc = function() {
+file.mtime(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv"))
+},
+# This function returns the content of the logfile
+valueFunc = function() {
+read.csv2(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv"), header = T, na.strings = "NA",sep=",")
+}
+)
+
+### TAB 1 - Sales
+
+salecartview <- eventReactive(input$addtocart,{
+
+a <- subset(inventoryData(),inventoryData()$QUALITY %in% input$quality & inventoryData()$PRODUCT %in% input$product & inventoryData()$TEXTURE %in% input$texture &
+inventoryData()$SIZE %in% input$size & inventoryData()$COLOUR %in% input$colour )
+
+a$COUNT <- input$count
+
+a <- a[,c(1,2,3,5,6,8,9,10)]
+
+a$Total_Price <- (a$COUNT * a$PRICE) - ((a$COUNT * a$PRICE)*input$discount/100)
+
+a <- as.data.frame(a)
+
+b <- salescsv()
+b <- rbind2(b,a)
+
+write.csv(b,paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv"),col.names = TRUE ,na = "NA",row.names = FALSE)
+
+#
+# observeEvent(input$removefromcart,{
+# bb <- salescsv()
+# bb<- subset(bb,bb$PRODUCT_ID!= input$valueremovefromcart)
+# write.csv(bb,"/opt/shiny-server/samples/ihiusa/revi/manager/app/saledata.csv",col.names = TRUE ,na = "NA",row.names = FALSE)
+#
+# })
+#
+# b <- read.csv("/opt/shiny-server/samples/ihiusa/revi/manager/app/saledata.csv",header = T)
+return(b)
+
+})
+
+observeEvent(input$makenewsale,{
+
+saledatadelete<- paste0("rm -rf /opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv")
+saledatanulling <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/saledatanull.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv")
+
+system(saledatadelete)
+system(saledatanulling)
+
+})
+
+observeEvent(input$addtocart,{
+output$cartitems <- renderTable({
+
+salecartview()
+})
+
+})
+
+customeremailidsales <- eventReactive(input$confirmcustomer,{
+
+a <- subset(customerData(), customerData()$EMAIL_ID == input$customer)
+a <- a[,1:8]
+return(a)
+
+})
+
+output$customerdetails <- renderTable({
+
+customeremailidsales()
+})
+
+completethesale <- eventReactive(input$makesale,{
+
+a <- salecartview()
+
+for (i in 1:nrow(a)){
+
+sqlsaledbinsert <- paste0("INSERT INTO `revidbprod`.`sales` (`TIME_STAMP`, `PRODUCT_ID`, `COUNT`, `TOTAL_PRICE`, `CUSTOMER_EMAIL_ID`) VALUES (",
+"NOW()",",",a$PRODUCT_ID[i],",",a$COUNT[i],",",a$Total_Price[i],",","'",input$customer,"'",");")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlsaledbinsert)
+
+}
+
+for (i in 1:nrow(a)){
+
+sqlinventorychangedbinsert <- paste0("INSERT INTO `revidbprod`.`inventory_change` (`TIME_STAMP`, `PRODUCT_ID_INV`, `COUNT`, `PRICE`) VALUES (",
+"NOW()",",",a$PRODUCT_ID[i],",",a$COUNT[i], "," ,a$Total_Price[i], ");")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventorychangedbinsert)
+
+}
+
+b <- customerData()
+b <- subset(customerData(), customerData()$EMAIL_ID == input$customer)
+b$TOTAL_ITEMS_BOUGHT <- b$TOTAL_ITEMS_BOUGHT + sum(a$COUNT)
+b$TOTAL_MONEY_SPENT <- b$TOTAL_MONEY_SPENT + sum(a$Total_Price)
+b$TOTAL_CREDIT_POINT <- b$TOTAL_CREDIT_POINT + (sum(a$Total_Price)) %/% 10
+
+sqlcustomerdbinsert <- paste0("UPDATE `revidbprod`.`customer` SET `TOTAL_ITEMS_BOUGHT`=",b$TOTAL_ITEMS_BOUGHT, ", `TOTAL_MONEY_SPENT`=" ,b$TOTAL_MONEY_SPENT, ", `TOTAL_CREDIT_POINT`=",
+b$TOTAL_CREDIT_POINT, ", `UPDATE_TIME`=","NOW()"," WHERE `EMAIL_ID`=","'",input$customer,"'",";")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlcustomerdbinsert)
+
+c <- readLines(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/saledata",random,".csv"))
+cc <- ""
+for(i in 1:length(c)){cc <- paste0(cc,c[i])}
+
+sqlinvoicetestinsert <- paste0("INSERT INTO `revidbprod`.`invoice` (`DATE`,`TIME_STAMP`, `ITEMS`, `TOTAL_AMOUNT`, `FIRST_NAME`, `LAST_NAME`, `INVOICE_EMAIL_ID`, `MOBILE`, `ADDRESS`) VALUES (",
+"NOW()",",","NOW()",",","'",cc,"'",",",sum(a$Total_Price), "," ,"'",b$FIRST_NAME,"'","," ,"'",b$LAST_NAME,"'", "," ,"'",input$customer,"'",
+"'",b$LAST_NAME,"'",",",b$MOBILE_NO,",","'",b$ADDRESS,"'", ");")
+
+dbGetQuery(con,sqlinvoicetestinsert)
+
+for (i in 1:nrow(a)){
+
+invent <- subset(inventoryData(),inventoryData()$PRODUCT_ID == a$PRODUCT_ID[i])
+
+sqlinventorydbupdate <- paste0("UPDATE `revidbprod`.`inventory_R` SET `COUNT`=",invent$COUNT - a$COUNT[i] , ", `DATE_MODIFIED`=" , "NOW()", ", `TIME_STAMP`=",
+"NOW()", " WHERE `PRODUCT_ID`=", a$PRODUCT_ID[i] ,";")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventorydbupdate)
+
+}
+
+row.names(a)<-NULL
+row.names(b)<- NULL
+
+#Encoding(imdata$SHORT_DESCRIPTION) <- "latin1"
+msg <- mime_part(paste('
+
+
+
+', print(xtable(a), type = 'html'), ' ', print( "TOTAL PRICE:" , type = 'html'), ' ', print( sum(a$Total_Price) , type = 'html'), ' ', print(xtable(b[,2:5]), type = 'html'), ' ', print("Thankyou for Shopping with us. See you soon", type = 'html'), '
+
+'))
+
+msg[["headers"]][["Content-Type"]] <- "text/html"
+
+from <- "IHIUSA-SALES"
+to <- input$customer
+header<-list(cc=c("sales@indianhairsusa.com"))
+subject <- "IHI USA INVOICE"
+mailControl=list(smtpServer="localhost")
+body = list(msg)
+sendmail(from=from,to=to,subject=subject,msg=body,headers=header,control=mailControl)
+
+done<- "Sale Success"
+return(done)
+
+})
+
+output$saledone <- renderText(
+
+completethesale()
+)
+
+### TAB 1 - EXCHANGES
+
+exchange1cartview <- eventReactive(input$addtocartexchange1,{
+
+a <- subset(inventoryData(),inventoryData()$QUALITY %in% input$qualityexchange1 & inventoryData()$PRODUCT %in% input$productexchange1 & inventoryData()$TEXTURE %in% input$textureexchange1 &
+inventoryData()$SIZE %in% input$sizeexchange1 & inventoryData()$COLOUR %in% input$colourexchange1 )
+
+a$COUNT <- input$countexchange1
+
+a <- a[,c(1,2,3,5,6,8,9,10)]
+
+a$Total_Price <- (a$COUNT * a$PRICE)
+
+a <- as.data.frame(a)
+
+b <- exchange1csv()
+b <- rbind2(b,a)
+write.csv(b,paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv"),col.names = TRUE ,na = "NA",row.names = FALSE)
+return(b)
+
+})
+
+exchange2cartview <- eventReactive(input$addtocartexchange2,{
+
+a <- subset(inventoryData(),inventoryData()$QUALITY %in% input$qualityexchange2 & inventoryData()$PRODUCT %in% input$productexchange2 & inventoryData()$TEXTURE %in% input$textureexchange2 &
+inventoryData()$SIZE %in% input$sizeexchange2 & inventoryData()$COLOUR %in% input$colourexchange2 )
+
+a$COUNT <- input$countexchange2
+
+a <- a[,c(1,2,3,5,6,8,9,10)]
+
+a$Total_Price <- (a$COUNT * a$PRICE)
+
+a <- as.data.frame(a)
+
+b <- exchange2csv()
+b <- rbind2(b,a)
+write.csv(b,paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv"),col.names = TRUE ,na = "NA",row.names = FALSE)
+return(b)
+
+})
+
+observeEvent(input$makenewsaleexchange,{
+
+exchange1datadelete<- paste0("rm -rf /opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv")
+exchange1datanulling <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/exchangenull1.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv")
+
+system(exchange1datadelete)
+system(exchange1datanulling)
+
+exchange2datadelete<- paste0("rm -rf /opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv")
+exchange2datanulling <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/exchangenull1.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv")
+
+system(exchange2datadelete)
+system(exchange2datanulling)
+
+})
+
+observeEvent(input$addtocartexchange1,{
+output$cartitemsexchange1 <- renderTable({
+
+exchange1cartview()
+})
+
+})
+
+observeEvent(input$addtocartexchange2,{
+output$cartitemsexchange2 <- renderTable({
+
+exchange2cartview()
+})
+
+})
+
+customeremailidexchange <- eventReactive(input$confirmcustomerechange,{
+
+a <- subset(customerData(), customerData()$EMAIL_ID == input$customerexhange)
+a <- a[,1:8]
+return(a)
+
+})
+
+output$customerdetailsexchange <- renderTable({
+
+customeremailidexchange()
+})
+
+completetheexchange <- eventReactive(input$makesaleexchange,{
+
+a <- exchange1cartview()
+aa <- exchange2cartview()
+
+for (i in 1:nrow(a)){
+
+sqlexchangedbinsert <- paste0("INSERT INTO `revidbprod`.`exchange` (`TIME_STAMP`, `PRODUCT_ID1`, `COUNT1`, `TOTAL_PRICE1`, `PRODUCT_ID2`, `COUNT2`, `TOTAL_PRICE2`, `CUSTOMER_EMAIL_ID`) VALUES (",
+"NOW()",",",a$PRODUCT_ID[i],",",a$COUNT[i],",",a$Total_Price[i],",",aa$PRODUCT_ID[i],",",aa$COUNT[i],",",aa$Total_Price[i],",",
+"'",input$customerexhange,"'",");")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlexchangedbinsert)
+
+}
+
+for (i in 1:nrow(a)){
+
+sqlinventoryexchange1dbinsert <- paste0("INSERT INTO `revidbprod`.`inventory_change` (`TIME_STAMP`, `PRODUCT_ID_INV`, `COUNT`, `PRICE`) VALUES (",
+"NOW()",",",a$PRODUCT_ID[i],",",a$COUNT[i], "," ,a$Total_Price[i], ");")
+
+sqlinventoryexchange2dbinsert <- paste0("INSERT INTO `revidbprod`.`inventory_change` (`TIME_STAMP`, `PRODUCT_ID_INV`, `COUNT`, `PRICE`) VALUES (",
+"NOW()",",",aa$PRODUCT_ID[i],",",aa$COUNT[i], "," ,aa$Total_Price[i], ");")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventoryexchange1dbinsert)
+Sys.sleep(1)
+dbGetQuery(con,sqlinventoryexchange2dbinsert)
+
+}
+
+b <- customerData()
+b <- subset(customerData(), customerData()$EMAIL_ID == input$customerexhange)
+b$TOTAL_ITEMS_BOUGHT <- b$TOTAL_ITEMS_BOUGHT + sum(aa$COUNT) - sum(a$COUNT)
+b$TOTAL_MONEY_SPENT <- b$TOTAL_MONEY_SPENT + sum(aa$Total_Price) - sum(a$Total_Price)
+if (sum(aa$Total_Price)< sum(a$Total_Price)){b$TOTAL_CREDIT_POINT <- b$TOTAL_CREDIT_POINT + (sum(a$Total_Price)-sum(aa$Total_Price) ) %/% 10}
+
+sqlcustomerexchangedbinsert <- paste0("UPDATE `revidbprod`.`customer` SET `TOTAL_ITEMS_BOUGHT`=",b$TOTAL_ITEMS_BOUGHT, ", `TOTAL_MONEY_SPENT`=" ,b$TOTAL_MONEY_SPENT, ", `TOTAL_CREDIT_POINT`=",
+b$TOTAL_CREDIT_POINT, ", `UPDATE_TIME`=","NOW()"," WHERE `EMAIL_ID`=","'",input$customerexhange,"'",";")
+
+dbGetQuery(con,sqlcustomerexchangedbinsert)
+
+c <- readLines(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange1",random,".csv"))
+cc <- ""
+d <- readLines(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/exchange2",random,".csv"))
+dd <- ""
+for(i in 1:length(c)){cc <- paste0(cc,c[i])}
+for(i in 1:length(c)){dd <- paste0(dd,d[i])}
+ccc <- paste0(cc,dd)
+
+sqlinvoicetestechangeinsert <- paste0("INSERT INTO `revidbprod`.`invoice` (`DATE`,`TIME_STAMP`, `ITEMS`, `TOTAL_AMOUNT`, `FIRST_NAME`, `LAST_NAME`, `INVOICE_EMAIL_ID`, `MOBILE`, `ADDRESS`) VALUES (",
+"NOW()",",","NOW()",",","'",ccc,"'",",",sum(a$Total_Price)-sum(aa$Total_Price), "," ,"'",b$FIRST_NAME,"'","," ,"'",b$LAST_NAME,"'", "," ,"'",input$customerexhange,"'",
+"'",b$LAST_NAME,"'",",",b$MOBILE_NO,",","'",b$ADDRESS,"'", ");")
+
+dbGetQuery(con,sqlinvoicetestechangeinsert)
+
+for (i in 1:nrow(a)){
+
+invent <- subset(inventoryData(),inventoryData()$PRODUCT_ID == a$PRODUCT_ID[i])
+
+sqlinventorydbexchange1update <- paste0("UPDATE `revidbprod`.`inventory_R` SET `COUNT`=",invent$COUNT + aa$COUNT[i] , ", `DATE_MODIFIED`=" , "NOW()", ", `TIME_STAMP`=",
+"NOW()", " WHERE `PRODUCT_ID`=", aa$PRODUCT_ID[i] ,";")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventorydbexchange1update)
+
+}
+
+for (i in 1:nrow(aa)){
+
+invent2 <- subset(inventoryData(),inventoryData()$PRODUCT_ID == aa$PRODUCT_ID[i])
+
+sqlinventorydbexchange2update <- paste0("UPDATE `revidbprod`.`inventory_R` SET `COUNT`=",invent2$COUNT - aa$COUNT[i] , ", `DATE_MODIFIED`=" , "NOW()", ", `TIME_STAMP`=",
+"NOW()", " WHERE `PRODUCT_ID`=", aa$PRODUCT_ID[i] ,";")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventorydbexchange2update)
+
+}
+
+row.names(a)<-NULL
+row.names(b)<- NULL
+
+#Encoding(imdata$SHORT_DESCRIPTION) <- "latin1"
+msg <- mime_part(paste('
+
+
+', print(xtable(a), type = 'html'), '
+', print( "TOTAL PRICE:" , type = 'html'), '
+', print( sum(a$Total_Price) , type = 'html'), '
+', print(xtable(b[,2:5]), type = 'html'), '
+', print("Thankyou for Shopping with us. See you soon", type = 'html'), '
+'))
+msg[["headers"]][["Content-Type"]] <- "text/html"
+
+from <- "IHIUSA-SALES"
+to <- input$customer
+header<-list(Cc=c("<sales@indianhairsusa.com>"))
+subject <- "IHI USA INVOICE"
+mailControl=list(smtpServer="localhost")
+body = list(msg)
+sendmail(from=from,to=to,subject=subject,msg=body,headers=header,control=mailControl)
+
+done<- "Exchange Success"
+return(done)
+
+})
+
+output$exchangedone <- renderText(
+
+completetheexchange()
+)
+
+### TAB 1 - REFUND
+
+refundcartview <- eventReactive(input$addtocartrefund,{
+
+a <- subset(inventoryData(),inventoryData()$QUALITY %in% input$qualityrefund & inventoryData()$PRODUCT %in% input$productrefund & inventoryData()$TEXTURE %in% input$texturerefund &
+inventoryData()$SIZE %in% input$sizerefund & inventoryData()$COLOUR %in% input$colourrefund )
+
+a$COUNT <- input$count
+
+a <- a[,c(1,2,3,5,6,8,9,10)]
+
+a$Total_Price <- (a$COUNT * a$PRICE)
+
+a <- as.data.frame(a)
+
+b <- refundcsv()
+b <- rbind2(b,a)
+write.csv(b,paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv"),col.names = TRUE ,na = "NA",row.names = FALSE)
+return(b)
+
+})
+
+observeEvent(input$makenewsalerefund,{
+
+refunddatadelete<- paste0("rm -rf /opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv")
+refunddatanulling <- paste0("cp /opt/shiny-server/samples/ihiusa/revi/manager/app/refundnull.csv /opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv")
+
+system(refunddatadelete)
+system(refunddatanulling)
+
+})
+
+observeEvent(input$addtocartrefund,{
+output$cartitemsrefund <- renderTable({
+
+refundcartview()
+})
+
+})
+
+customeremailidrefund <- eventReactive(input$confirmcustomerrefund,{
+
+a <- subset(customerData(), customerData()$EMAIL_ID == input$customerrefund)
+a <- a[,1:8]
+return(a)
+
+})
+
+output$customerdetailsrefund <- renderTable({
+
+customeremailidrefund()
+})
+
+completethesalerefund <- eventReactive(input$makesalerefund,{
+
+a <- refundcartview()
+
+for (i in 1:nrow(a)){
+
+sqlrefunddbinsert <- paste0("INSERT INTO `revidbprod`.`refund` (`TIME_STAMP`, `PRODUCT_ID`, `COUNT`, `TOTAL_PRICE`, `CUSTOMER_EMAIL_ID`) VALUES (",
+"NOW()",",",a$PRODUCT_ID[i],",",a$COUNT[i],",",a$Total_Price[i],",","'",input$customerrefund,"'",");")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlrefunddbinsert)
+
+}
+
+for (i in 1:nrow(a)){
+
+sqlinventorychangerefunddbinsert <- paste0("INSERT INTO `revidbprod`.`inventory_change` (`TIME_STAMP`, `PRODUCT_ID_INV`, `COUNT`, `PRICE`) VALUES (",
+"NOW()",",",a$PRODUCT_ID[i],",",a$COUNT[i], "," ,a$Total_Price[i], ");")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventorychangerefunddbinsert)
+
+}
+
+b <- customerData()
+b <- subset(customerData(), customerData()$EMAIL_ID == input$customerrefund)
+b$TOTAL_ITEMS_BOUGHT <- b$TOTAL_ITEMS_BOUGHT - sum(a$COUNT)
+b$TOTAL_MONEY_SPENT <- b$TOTAL_MONEY_SPENT - sum(a$Total_Price)
+b$TOTAL_CREDIT_POINT <- b$TOTAL_CREDIT_POINT - (sum(a$Total_Price)) %/% 10
+
+sqlcustomerdbrefundinsert <- paste0("UPDATE `revidbprod`.`customer` SET `TOTAL_ITEMS_BOUGHT`=",b$TOTAL_ITEMS_BOUGHT, ", `TOTAL_MONEY_SPENT`=" ,b$TOTAL_MONEY_SPENT, ", `TOTAL_CREDIT_POINT`=",
+b$TOTAL_CREDIT_POINT, ", `UPDATE_TIME`=","NOW()"," WHERE `EMAIL_ID`=","'",input$customerrefund,"'",";")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlcustomerdbrefundinsert)
+
+c <- readLines(paste0("/opt/shiny-server/samples/ihiusa/revi/manager/app/refund",random,".csv"))
+cc <- ""
+for(i in 1:length(c)){cc <- paste0(cc,c[i])}
+
+sqlinvoicetestrefundinsert <- paste0("INSERT INTO `revidbprod`.`invoice` (`DATE`,`TIME_STAMP`, `ITEMS`, `TOTAL_AMOUNT`, `FIRST_NAME`, `LAST_NAME`, `INVOICE_EMAIL_ID`, `MOBILE`, `ADDRESS`) VALUES (",
+"NOW()",",","NOW()",",","'",cc,"'",",",sum(a$Total_Price), "," ,"'",b$FIRST_NAME,"'","," ,"'",b$LAST_NAME,"'", "," ,"'",input$customerrefund,"'",
+"'",b$LAST_NAME,"'",",",b$MOBILE_NO,",","'",b$ADDRESS,"'", ");")
+
+dbGetQuery(con,sqlinvoicetestrefundinsert)
+
+for (i in 1:nrow(a)){
+
+invent <- subset(inventoryData(),inventoryData()$PRODUCT_ID == a$PRODUCT_ID[i])
+
+sqlinventorydbrefundupdate <- paste0("UPDATE `revidbprod`.`inventory_R` SET `COUNT`=",invent$COUNT + a$COUNT[i] , ", `DATE_MODIFIED`=" , "NOW()", ", `TIME_STAMP`=",
+"NOW()", " WHERE `PRODUCT_ID`=", a$PRODUCT_ID[i] ,";")
+
+Sys.sleep(1)
+dbGetQuery(con,sqlinventorydbrefundupdate)
+
+}
+
+row.names(a)<-NULL
+row.names(b)<- NULL
+
+#Encoding(imdata$SHORT_DESCRIPTION) <- "latin1"
+msg <- mime_part(paste('
+
+
+
+', print(xtable(a), type = 'html'), ' ', print( "TOTAL PRICE:" , type = 'html'), ' ', print( sum(a$Total_Price) , type = 'html'), ' ', print(xtable(b[,2:5]), type = 'html'), ' ', print("Thankyou for Shopping with us. See you soon", type = 'html'), '
+
+'))
+
+msg[["headers"]][["Content-Type"]] <- "text/html"
+
+from <- "REVI-SALES"
+to <- input$customer
+header<-list(Cc=c("<sales@indianhairsusa.com>"))
+subject <- "REVI INVOICE"
+mailControl=list(smtpServer="localhost")
+body = list(msg)
+sendmail(from=from,to=to,subject=subject,msg=body,headers=header,control=mailControl)
+
+done<- "Refund Success"
+return(done)
+
+})
+
+output$makesalerefundtext <- renderText(
+
+completethesalerefund()
+)
+
+##################################################################################################################
+
+### TAB 2 - Inventory
+
+inventoryview <- eventReactive(input$addtocartinventory, {
+
+a<- subset(inventoryData(),inventoryData()$QUALITY %in% input$qualityinventory & inventoryData()$PRODUCT %in% input$productinventory & inventoryData()$TEXTURE %in% input$textureinventory &
+inventoryData()$SIZE %in% input$sizeinventory & inventoryData()$COLOUR %in% input$colourinventory )
+
+#a <- a[,1:9]
+return(a)
+
+})
+
+output$cartitemsinventory <- renderTable({
+
+inventoryview()
+
+})
+
+output$inventorywholetable <- renderDataTable(
+
+# inventoryData()[,1:9],
+inventoryData(),
+
+options = list(pageLength = 10)
+
+)
+
+inventorychangeview <- eventReactive(input$addtocartinventorychange, {
+
+b<- subset(inventoryData(),inventoryData()$QUALITY == input$qualityinventorychange & inventoryData()$PRODUCT == input$productinventorychange & inventoryData()$TEXTURE == input$textureinventorychange &
+inventoryData()$SIZE == input$sizeinventorychange & inventoryData()$COLOUR == input$colourinventorychange )
+
+#a <- a[,1:9]
+return(b)
+
+})
+
+output$cartitemsinventorychange <- renderTable({
+
+inventorychangeview()
+
+})
+
+inventorychangequery <- eventReactive(input$confirminventorychange, {
+
+if (input$countinventorychangeadd ==0) {NULL
+}else {
+
+sqlcount<-paste0( "UPDATE `revidbprod`.`inventory_R` SET `COUNT`=",input$countinventorychangeadd,",","`DATE_MODIFIED`=","NOW()",",","`TIME_STAMP`=","NOW()"," ", "WHERE `PRODUCT_ID`=", inventorychangeview()$PRODUCT_ID,";")
+
+dbGetQuery(con,sqlcount)
+
+sqlchangecount <- paste0("INSERT INTO `revidbprod`.`inventory_change` (`TIME_STAMP`,`PRODUCT_ID_INV`,`COUNT`) VALUES (","NOW()",",",inventorychangeview()$PRODUCT_ID,",",
+input$countinventorychangeadd,");")
+
+dbGetQuery(con,sqlchangecount)
+
+sqlchangecountmanual <- paste0("INSERT INTO `revidbprod`.`manual_inventory_change` (`TIMESTAMP`,`PRODUCT_ID`,`COUNT`) VALUES (","NOW()",",",inventorychangeview()$PRODUCT_ID,",",input$countinventorychangeadd,");")
+
+dbGetQuery(con,sqlchangecountmanual)
+
+a<-c(0,0)
+
+}
+
+if (input$countinventorychangeprice ==0) {NULL
+}else {
+
+sqlcount<-paste0( "UPDATE `revidbprod`.`inventory_R` SET `PRICE`=",input$countinventorychangeprice,",","`DATE_MODIFIED`=","NOW()",",","`TIME_STAMP`=","NOW()"," ", "WHERE `PRODUCT_ID`=", inventorychangeview()$PRODUCT_ID,";")
+
+dbGetQuery(con,sqlcount)
+
+sqlchangecount <- paste0("INSERT INTO `revidbprod`.`inventory_change` (`TIME_STAMP`,`PRODUCT_ID_INV`,`PRICE`) VALUES (","NOW()",",",inventorychangeview()$PRODUCT_ID,",",
+input$countinventorychangeprice,");")
+
+dbGetQuery(con,sqlchangecount)
+
+sqlchangecountmanual <- paste0("INSERT INTO `revidbprod`.`manual_inventory_change` (`TIMESTAMP`,`PRODUCT_ID`,`PRICE`) VALUES (","NOW()",",",inventorychangeview()$PRODUCT_ID,",", input$countinventorychangeprice,");")
+dbGetQuery(con,sqlchangecountmanual)
+
+b<-c("CHANGES MADE","DB UPDATED")
+
+return(b)
+
+}
+
+})
+
+output$outputId1 <- renderText({inventorychangequery()[1]})
+
+output$outputId2 <- renderText({inventorychangequery()[2]})
+
+##################################################################################################################
+
+### TAB 3
+
+###Overall stats
+
+output$totalsalesstats<- renderInfoBox({
+
+a <- nrow(salesData())
+
+infoBox("Total Sales",a,icon= icon("credit-card"))
+
+})
+
+output$totalexchangessstats<- renderInfoBox({
+
+a <- nrow(exchangeData())
+
+infoBox("Total Exchanges",a,icon= icon("credit-card"))
+
+})
+
+output$totalrefundsstats<- renderInfoBox({
+
+a <- nrow(refundData())
+
+infoBox("Total Refunds",a,icon= icon("credit-card"))
+
+})
+
+output$totalinvoicestats <- renderInfoBox({
+
+a <- nrow(invoiceData())
+
+infoBox("Total Invoices",a,icon= icon("file",lib="glyphicon"))
+
+})
+
+output$totalcustomerstats <- renderInfoBox({
+
+a <- nrow(customerData())
+
+infoBox("Total Customers",a,icon= icon("user",lib="glyphicon"))
+
+})
+
+output$totalmanualinventorychangestats <- renderInfoBox({
+a <- nrow(manualinventorychangeData())
+infoBox("Total Manual Inventory Changes",a,icon= icon("list-alt",lib="glyphicon"))
+})
+
+#################################################################################################################
+
+##################################################################################################################
+
+### TAB 4 Member ship
+
+memberview <- eventReactive(input$memberchecksubmit, {
+
+a<- subset(customerData(),customerData()$EMAIL_ID == input$membercheck )
+
+#a <- a[,1:9]
+return(a)
+
+})
+
+output$memberchecktable <- renderTable({
+
+memberview()
+
+})
+
+output$completememberchecktable <- renderDataTable({
+customerData()
+})
+
+memberadd <- eventReactive(input$memberaddsubmit, {
+
+sqlmemberadd <- paste0("INSERT INTO `revidbprod`.`customer` (`FIRST_NAME`, `LAST_NAME`, `EMAIL_ID`, `MOBILE_NO`, `ADDRESS`, `DOB`, `ANNIVERSARY`, `UPDATE_TIME`, `TOTAL_ITEMS_BOUGHT`, `TOTAL_MONEY_SPENT`, `TOTAL_CREDIT_POINT` ) VALUES ("
+,"'",input$memberadd2,"'",", ","'",input$memberadd3,"'",", ","'",input$memberadd1,"'",", ",input$memberadd4,", ","'",input$memberadd5,"'",", ","'",
+input$memberadd6,"'",", ","'",input$memberadd7,"'",", ","NOW()",", 0, 0, 0" ,");")
+
+dbGetQuery(con,sqlmemberadd)
+
+a <- dbGetQuery(con,"SELECT * FROM `revidbprod`.`customer` ORDER BY CUSTOMER_ID DESC LIMIT 1;")
+
+return(a)
+
+})
+
+output$memberaddtable <- renderTable({
+
+memberadd()
+
+})
+
+memberupdateview <- eventReactive(input$memberupdatesubmit, {
+
+a<- subset(customerData(),customerData()$EMAIL_ID == input$memberupdate )
+
+#a <- a[,1:9]
+return(a)
+
+})
+
+output$memberupdatetable <- renderTable({
+
+memberupdateview()
+
+})
+
+memberupdatenew <- eventReactive(input$memberupdatesubmitfinal, {
+
+sqlmemberupdate <- paste0( "UPDATE `revidbprod`.`customer` SET `MOBILE_NO`=",input$memberupdate4,",","`ADDRESS`=","'",input$memberupdate5,"'",",", "UPDATE_TIME =","NOW()",
+" WHERE `EMAIL_ID`=","'",input$memberupdate,"'",";")
+
+dbGetQuery(con,sqlmemberupdate)
+
+a <- "DB UPDATED"
+
+return(a)
+
+})
+
+output$memberupdatetablenew <-renderText({
+
+memberupdatenew()
+
+})
+
+##################################################################################################################
+
+##################################################################################################################
+
+##################################################################################################################
+
+}
+
+shinyApp(ui, server)
+
+ 
